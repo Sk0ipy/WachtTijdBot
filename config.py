@@ -1,7 +1,7 @@
 # this file will be used to configure the application
 
 # discord bot token
-token = "MTA5OTczNTgwNzA2Mjk3ODc1MA.GnjKQU.K7HknPCQMmBiGrrLUp4SxZjIunS_LlWvZXMwX0"
+token = "MTEwMDA5ODg5OTU3MTY0NjU5NA.GtwUWT.otXsiJ70zxdGTCwxCxFwDJ6sHSM-TrG_Ih7mAs"
 
 # guild id
 guild_id = "1059189027611349002"
