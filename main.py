@@ -89,7 +89,8 @@ async def gettimes(ctx):
                     land = interaction.data["values"][0]
                     rides = get_rides_per_land(user_input, land, country)
 
-                    # rides are 3 arrays, 1 for the name, 1 for the wait time and 1 for the status, but they are all in the same order i want them to be in the embed so i can just use 1 for loop
+                    # rides are 3 arrays, 1 for the name, 1 for the wait time and 1 for the status, but they are all
+                    # in the same order i want them to be in the embed so i can just use 1 for loop
                     embed = discord.Embed(
                         title=f"{user_input} rides",
                         description="Hier zijn de attracties in dit gebied",
@@ -110,7 +111,8 @@ async def gettimes(ctx):
             elif rides_or_land == "park":
                 rides = rides_per_park(user_input, country)
 
-                # rides are 3 arrays, 1 for the name, 1 for the wait time and 1 for the status, but they are all in the same order i want them to be in the embed so i can just use 1 for loop
+                # rides are 3 arrays, 1 for the name, 1 for the wait time and 1 for the status, but they are all in
+                # the same order i want them to be in the embed so i can just use 1 for loop
                 embed = discord.Embed(
                     title=f"{user_input} rides",
                     description="Hier zijn de attracties in dit gebied",
@@ -160,7 +162,7 @@ async def clear(ctx):
 
 
 config = {
-    'TOKEN': token,
+    'TOKEN': main_token,
     '!': prefix,
     'OWNER': owner,
     'NAME': name,

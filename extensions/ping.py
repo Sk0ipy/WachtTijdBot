@@ -3,7 +3,7 @@ import lightbulb, hikari
 from config import *
 
 config = {
-    'TOKEN': token,
+    'TOKEN': main_token,
     '!': prefix,
     'OWNER': owner,
     'NAME': name,
