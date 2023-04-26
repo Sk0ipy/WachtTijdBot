@@ -3,9 +3,7 @@ from discord.ext import commands
 from discord.ui import *
 
 from config import *
-from parksPcountry import get_parks_per_country
-from parksPcountry import rides_per_park
-from parksPcountry import wait_time
+from parksPcountry import *
 
 """
 get all the parks per country with help of the json file
@@ -35,81 +33,15 @@ async def help(ctx):
                     "laat zien",
         color=0x00ff00)
     embed.add_field(name="!help", value="Laat dit bericht zien", inline=False)
-    embed.add_field(name="!getrides", value="Laat alle attracties zien van de gekozen pretpark", inline=False)
     embed.add_field(name="!gettimes", value="Laat alle wachttijden zien per pretpark", inline=False)
 
     await ctx.send(embed=embed)
 
 
-"""
-this is the !wtcountry, this will get the coutry that user want to see
-"""
-
-
-@bot.command()
-async def getrides(ctx):
-    select_country = Select(
-        placeholder="Selecteer een land",
-        options=[
-            discord.SelectOption(label="Belgium", value="Belgium"),
-            discord.SelectOption(label="Brazil", value="Brazil"),
-            discord.SelectOption(label="Canada", value="Canada"),
-            discord.SelectOption(label="China", value="China"),
-            discord.SelectOption(label="Denmark", value="Denmark"),
-            discord.SelectOption(label="England", value="England"),
-            discord.SelectOption(label="France", value="France"),
-            discord.SelectOption(label="Germany", value="Germany"),
-            discord.SelectOption(label="Hong Kong", value="Honk Kong"),
-            discord.SelectOption(label="Italy", value="Italy"),
-            discord.SelectOption(label="Japan", value="Japan"),
-            discord.SelectOption(label="Mexico", value="Mexico"),
-            discord.SelectOption(label="Netherlands", value="Netherlands"),
-            discord.SelectOption(label="Poland", value="Poland"),
-            discord.SelectOption(label="South Korea", value="South Korea"),
-            discord.SelectOption(label="Spain", value="Spain"),
-            discord.SelectOption(label="Sweden", value="Sweden"),
-            discord.SelectOption(label="United States", value="United States"),
-        ]
-    )
-
-    async def country_callback(interaction):
-        country = interaction.data["values"][0]
-        parks = get_parks_per_country(country)
-        select_park = Select(
-            placeholder="Selecteer een pretpark",
-            options=[discord.SelectOption(label=park, value=park) for park in parks]
-        )
-
-        async def park_callback(interaction):
-            park = interaction.data["values"][0]
-            park_rides = rides_per_park(park, country)
-
-            embed = discord.Embed(
-                title=f"{park} rides",
-                description="Here are the rides in this park",
-                color=0x00ff00
-            )
-            embed.add_field(name="Rides", value="\n".join(park_rides), inline=False)
-            await interaction.response.send_message(embed=embed)
-
-        select_park.callback = park_callback
-        view = View()
-        view.add_item(select_park)
-        await interaction.response.edit_message(view=view)
-        return
-
-    # add other countries' logic here
-
-    select_country.callback = country_callback
-    view = View()
-    view.add_item(select_country)
-    await ctx.send("Select a country", view=view)
-
-
 @bot.command()
 async def gettimes(ctx):
     select_country = Select(
-        placeholder="Selecteer een land",
+        placeholder="kies uw land",
         options=[
             discord.SelectOption(label="Belgium", value="Belgium"),
             discord.SelectOption(label="Brazil", value="Brazil"),
@@ -137,36 +69,68 @@ async def gettimes(ctx):
         parks = get_parks_per_country(country)
 
         select_park = Select(
-            placeholder="Selecteer een pretpark",
+            placeholder="kies uw pretpark",
             options=[discord.SelectOption(label=park, value=park) for park in parks]
         )
 
-        async def park_callback(interaction):
-            park = interaction.data["values"][0]
-            park_rides = wait_time(park, country)
+        async def rides_or_land_callback(interaction):
+            # check if the user selected a park or a land
+            user_input = interaction.data["values"][0]
+            rides_or_land = get_park_or_land(user_input, country)
+            if rides_or_land == "land":
+                # print all the lands in the park]
+                lands = get_lands_per_park(user_input, country)
+                select_land = Select(
+                    placeholder="kies uw gebied",
+                    options=[discord.SelectOption(label=land, value=land) for land in lands]
+                )
 
-            name = []
-            time = []
-            status = []
-            for i in park_rides:
-                name.append(i[0])
-                time.append(i[1])
-                status.append(i[2])
+                async def land_callback(interaction):
+                    land = interaction.data["values"][0]
+                    rides = get_rides_per_land(user_input, land, country)
 
-            embed = discord.Embed(
-                title=f"{park} rides",
-                description="Here are the rides in this park",
-                color=0x00ff00
-            )
-            embed.add_field(name="Rides", value="\n".join(name), inline=True)
-            embed.add_field(name="Time", value="\n".join(time), inline=True)
-            embed.add_field(name="Status", value="\n".join(status), inline=True)
-            await interaction.response.send_message(embed=embed)
+                    # rides are 3 arrays, 1 for the name, 1 for the wait time and 1 for the status, but they are all in the same order i want them to be in the embed so i can just use 1 for loop
+                    embed = discord.Embed(
+                        title=f"{user_input} rides",
+                        description="Hier zijn de attracties in dit gebied",
+                        color=0x00ff00
+                    )
+                    for i in range(len(rides[0])):
+                        embed.add_field(name=rides[0][i], value=f"Wachttijd: {rides[1][i]}\nStatus: {rides[2][i]}",
+                                        inline=False)
 
-        select_park.callback = park_callback
+                    await interaction.response.send_message(embed=embed)
+
+                select_land.callback = land_callback
+                view = View()
+                view.add_item(select_land)
+                await interaction.response.edit_message(content="Selecteer een land", view=view)
+
+
+            elif rides_or_land == "park":
+                rides = rides_per_park(user_input, country)
+
+                # rides are 3 arrays, 1 for the name, 1 for the wait time and 1 for the status, but they are all in the same order i want them to be in the embed so i can just use 1 for loop
+                embed = discord.Embed(
+                    title=f"{user_input} rides",
+                    description="Hier zijn de attracties in dit gebied",
+                    color=0x00ff00
+                )
+                for i in range(len(rides[0])):
+                    embed.add_field(name=rides[0][i], value=f"Wachttijd: {rides[1][i]}\nStatus: {rides[2][i]}",
+                                    inline=False)
+
+                await interaction.response.send_message(embed=embed)
+
+            else:
+                await interaction.response.send_message("Oeps, er is iets misgegaan")
+                return
+
+        select_park.callback = rides_or_land_callback
         view = View()
         view.add_item(select_park)
-        await interaction.response.edit_message(view=view)
+        await interaction.response.edit_message(content="Selecteer een pretpark", view=view)
+
         return
 
     # add other countries' logic here
@@ -174,7 +138,7 @@ async def gettimes(ctx):
     select_country.callback = country_callback
     view = View()
     view.add_item(select_country)
-    await ctx.send("Select a country", view=view)
+    await ctx.send("Selecteer een land", view=view)
 
 
 """
